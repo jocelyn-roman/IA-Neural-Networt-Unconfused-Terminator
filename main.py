@@ -1,76 +1,74 @@
+"""
+Created on Apr 27, 2018
+
+@author: J&J
+"""
+
 import numpy as np
 
-X = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)
-y = np.array(([92], [86], [89]), dtype=float)
 
-# scale units
-X = X / np.amax(X, axis=0)  # maximum of X array
-y = y / 100  # max test score is 100
-
-
-class Neural_Network(object):
-    def __init__(self):
+class NeuralNetwork(object):
+    def __init__(self, input_size, hidden_sizes, output_size):
         # parameters
-        self.inputSize = 2
-        self.outputSize = 1
-        self.hiddenSize = 3
+        self.sizes = [input_size] + hidden_sizes + [output_size]
+        self.weights = []
+        self.z = []
 
         # weights
-        self.W1 = np.random.randn(self.inputSize, self.hiddenSize)  # (3x2) weight matrix from input to hidden layer
-        self.W2 = np.random.randn(self.hiddenSize, self.outputSize)  # (3x1) weight matrix from hidden to output layer
+        for i in range(len(self.sizes) - 1):
+            self.weights.append(np.random.rand(self.sizes[i], self.sizes[i+1]))
 
-    def forward(self, X):
+    def forward(self, x):
         # forward propagation through our network
-        self.z = np.dot(X, self.W1)  # dot product of X (input) and first set of 3x2 weights
-        # self.z2 = self.RELU(self.z)
-        self.z2 = self.sigmoid(self.z)
-        self.z3 = np.dot(self.z2, self.W2)  # dot product of hidden layer (z2) and second set of 3x1 weights
-        # o = self.RELU(self.z3)
-        o = self.sigmoid(self.z3)
-        return o
+        self.z = [x]
+        for W_i in self.weights:
+            # dot product from the last result and W_i
+            product = np.dot(self.z[-1], W_i)
+            # result passed through the activation function
+            self.z.append(self.relu(product))
 
-    def sigmoid(self, s):
-        # activation function
-        return 1 / (1 + np.exp(-s))
+        # the output is the last Z
+        output = self.z[-1]
+        return output
 
-    def sigmoidPrime(self, s):
-        # derivative of sigmoid
-        return s * (1 - s)
+    def backward(self, x, y, o):
+        return
 
-    def RELU(self, s):
-        # activation function
-        # return s*(s>0)
-        return np.maximum(s, 0, s)
+    # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
-    def dReLU(self, s):
-        # derivada
-        return 1. * (s > 0)
+    @staticmethod
+    def relu(x):
+        # Rectified Linear Units (ReLU) activation function
+        return np.maximum(x, 0, x)
 
-    def backward(self, X, y, o):
-        # backward propgate through the network
-        self.o_error = y - o  # error in output
-        # self.o_delta = self.o_error*self.dReLU(o) # applying derivative of sigmoid to error
-        self.o_delta = self.o_error * self.sigmoidPrime(o)
+    @staticmethod
+    def relu_prime(x):
+        # derivative of Rectified Linear Units (ReLU)
+        return 1. * (x > 0)
 
-        self.z2_error = self.o_delta.dot(
-            self.W2.T)  # z2 error: how much our hidden layer weights contributed to output error
-        # self.z2_delta = self.z2_error*self.dReLU(self.z2) # applying derivative of sigmoid to z2 error
-        self.z2_delta = self.z2_error * self.sigmoidPrime(self.z2)
-
-        self.W1 += X.T.dot(self.z2_delta)  # adjusting first set (input --> hidden) weights
-        self.W2 += self.z2.T.dot(self.o_delta)  # adjusting second set (hidden --> output) weights
-
-    def train(self, X, y):
-        o = self.forward(X)
-        self.backward(X, y, o)
+    def train(self, x, y):
+        o = self.forward(x)
+        self.backward(x, y, o)
 
 
-NN = Neural_Network()
+def main():
+    x = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)
+    y = np.array(([92], [86], [89]), dtype=float)
 
-for i in range(1000):  # trains the NN 1,000 times
-    print("Input: \n" + str(X))
-    print("Actual Output: \n" + str(y))
-    print("Predicted Output: \n" + str(NN.forward(X)))
-    print("Loss: \n" + str(np.mean(np.square(y - NN.forward(X)))))  # mean sum squared loss
-    print("\n")
-    NN.train(X, y)
+    # scale units
+    x = x / np.amax(x, axis=0)  # maximum of X array
+    y = y / 100  # max test score is 100
+
+    neural_network = NeuralNetwork(2, [3, 5, 10, 2], 1)
+
+    for i in range(1):  # trains the NN 1,000 times
+        print("Input: \n" + str(x))
+        print("Actual Output: \n" + str(y))
+        print("Predicted Output: \n" + str(neural_network.forward(x)))
+        print("Loss: \n" + str(np.mean(np.square(y - neural_network.forward(x)))))  # mean sum squared loss
+        print("\n")
+        neural_network.train(x, y)
+
+
+if __name__ == "__main__":
+    main()
