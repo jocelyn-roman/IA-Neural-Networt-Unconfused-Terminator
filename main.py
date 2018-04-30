@@ -8,6 +8,9 @@ import numpy as np
 
 
 class NeuralNetwork(object):
+    # This class was initially based on:
+    # https://dev.to/shamdasani/build-a-flexible-neural-network-with-backpropagation-in-python
+
     def __init__(self, input_size, hidden_sizes, output_size):
         # parameters
         self.sizes = [input_size] + hidden_sizes + [output_size]
@@ -45,6 +48,48 @@ class NeuralNetwork(object):
     def relu_prime(x):
         # derivative of Rectified Linear Units (ReLU)
         return 1. * (x > 0)
+
+    @staticmethod
+    def to_one_hot(y):
+        # Solution based on: https://stackoverflow.com/questions/29831489/numpy-1-hot-array
+        one_hot_vector = np.zeros((y.size, y.max() + 1))
+        one_hot_vector[np.arange(y.size), y] = 1
+        return one_hot_vector
+
+    @staticmethod
+    def softmax(x):
+        # Based on: https://stackoverflow.com/questions/34968722/how-to-implement-the-softmax-function-in-python
+        return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+    @staticmethod
+    def stable_softmax(x):
+        # Based on: https://deepnotes.io/softmax-crossentropy
+        exp = np.exp(x - np.max(x))
+        return exp / np.sum(exp, axis=0)  # Axis=0 added from above solution
+
+    # Cross-Entropy solution fetched from: Solution based on: https://deepnotes.io/softmax-crossentropy
+
+    @staticmethod
+    def cross_entropy(x, y):
+        # X is the output from fully connected layer (num_examples x num_classes)
+        # y is labels (num_examples x 1)
+
+        m = y.shape[0]
+        p = NeuralNetwork.softmax(x)
+        log_likelihood = -np.log(p[range(m), y])
+        loss = np.sum(log_likelihood) / m
+        return loss
+
+    @staticmethod
+    def delta_cross_entropy(x, y):
+        # X is the output from fully connected layer (examples x classes)
+        # y is labels (num_examples x 1)
+
+        m = y.shape[0]
+        grad = NeuralNetwork.softmax(x)
+        grad[range(m), y] -= 1
+        grad = grad / m
+        return grad
 
     def train(self, x, y):
         o = self.forward(x)
