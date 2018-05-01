@@ -4,7 +4,10 @@ Created on Apr 27, 2018
 @author: J&J
 """
 
+from mnist import MNIST
+import matplotlib.pyplot as plt
 import numpy as np
+# import os # in case of file saving
 
 
 class NeuralNetwork(object):
@@ -17,7 +20,7 @@ class NeuralNetwork(object):
         self.weights = []
         self.z = []
 
-        # weights
+        # random weights
         for i in range(len(self.sizes) - 1):
             self.weights.append(np.random.rand(self.sizes[i], self.sizes[i+1]))
 
@@ -42,12 +45,13 @@ class NeuralNetwork(object):
     @staticmethod
     def relu(x):
         # Rectified Linear Units (ReLU) activation function
-        return np.maximum(x, 0, x)
+        # return np.maximum(x, 0, x) it modifies x, which is the reference
+        return x * (x > 0)
 
     @staticmethod
     def relu_prime(x):
         # derivative of Rectified Linear Units (ReLU)
-        return 1. * (x > 0)
+        return 1 * (x > 0)
 
     @staticmethod
     def to_one_hot(y):
@@ -59,13 +63,14 @@ class NeuralNetwork(object):
     @staticmethod
     def softmax(x):
         # Based on: https://stackoverflow.com/questions/34968722/how-to-implement-the-softmax-function-in-python
-        return np.exp(x) / np.sum(np.exp(x), axis=0)
+        exp = np.exp(x)
+        return exp / np.sum(exp, axis=1, keepdims=True)
 
     @staticmethod
     def stable_softmax(x):
         # Based on: https://deepnotes.io/softmax-crossentropy
         exp = np.exp(x - np.max(x))
-        return exp / np.sum(exp, axis=0)  # Axis=0 added from above solution
+        return exp / np.sum(exp, axis=1, keepdims=True)
 
     # Cross-Entropy solution fetched from: Solution based on: https://deepnotes.io/softmax-crossentropy
 
@@ -77,13 +82,15 @@ class NeuralNetwork(object):
         m = y.shape[0]
         p = NeuralNetwork.softmax(x)
         log_likelihood = -np.log(p[range(m), y])
+        print(p[range(m), y])
+        print(log_likelihood)
         loss = np.sum(log_likelihood) / m
         return loss
 
     @staticmethod
     def delta_cross_entropy(x, y):
         # X is the output from fully connected layer (examples x classes)
-        # y is labels (num_examples x 1)
+        # y is labels (examples x 1)
 
         m = y.shape[0]
         grad = NeuralNetwork.softmax(x)
@@ -91,29 +98,95 @@ class NeuralNetwork(object):
         grad = grad / m
         return grad
 
+    # Custom one-hot vector cross-entropy functions
+
+    @staticmethod
+    def one_hot_cross_entropy(p, q):
+        # p are the one-hot labels
+        # q is the result vector from softmax
+        return -np.sum(p * np.log(q), axis=1)
+
+    @staticmethod
+    def one_hot_cross_entropy_prime_with_softmax(p, q):
+        # p are the one-hot labels
+        # q is the result vector from softmax
+        return q - p
+
     def train(self, x, y):
         o = self.forward(x)
         self.backward(x, y, o)
 
 
+def visualize_image(W, loss, title, i):
+    # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
+    element = W[:, i]
+    img = element.reshape(28, 28)
+    plt.imshow(img, cmap='gray')
+    plt.title("W " + str(i) + "th with loss of " + str(loss))
+
+    # Uncomment this to show the image
+    plt.show()
+
+    # Uncomment the following code to save into disk
+    '''
+    directory = os.path.abspath("output/" + title)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig(directory + "/img" + str(i))
+    '''
+
+
 def main():
-    x = np.array(([2, 9], [1, 5], [3, 6]), dtype=float)
-    y = np.array(([92], [86], [89]), dtype=float)
+    # loading MNIST data set
+    data = MNIST("./MNIST_data_set")
+    images, labels = data.load_training()
 
-    # scale units
-    x = x / np.amax(x, axis=0)  # maximum of X array
-    y = y / 100  # max test score is 100
+    # converting to numpy arrays
+    labels = np.array(labels)
+    images = np.array(images)
 
-    neural_network = NeuralNetwork(2, [3, 5, 10, 2], 1)
+    # getting dimensions
+    first_layer = images.shape[1]
+    last_layer = labels.max() + 1
 
-    for i in range(1):  # trains the NN 1,000 times
-        print("Input: \n" + str(x))
-        print("Actual Output: \n" + str(y))
-        print("Predicted Output: \n" + str(neural_network.forward(x)))
-        print("Loss: \n" + str(np.mean(np.square(y - neural_network.forward(x)))))  # mean sum squared loss
-        print("\n")
-        neural_network.train(x, y)
+    neural_network = NeuralNetwork(first_layer, [50], last_layer)
+
+
+def test():
+    a = np.array([
+       [-0.13916012, -0.15914156, -0.03611553, -0.06629650],
+       [-0.25373585,  0.39812677, -0.24083797, -0.17328009],
+       [-0.12787567,  0.14076882, -0.36499643, -0.32951989],
+       [ 0.24145116, -0.01344613,  0.25512426, -0.31819186],
+       [-0.02645782,  0.56205276,  0.05822283, -0.19174236],
+       [ 0.11615288, -0.20608460,  0.05785365, -0.24800982]])
+
+    b = np.array([0, 1, 2, 1, 2, 0])
+
+    c = np.array([3, 1, 2, 1, 2, 0])
+
+    print(a.shape)
+    print(NeuralNetwork.relu(a))
+    print(NeuralNetwork.relu_prime(a))
+
+    print(b.shape)
+    print(NeuralNetwork.to_one_hot(b))
+
+    print(NeuralNetwork.softmax(a))
+    print(NeuralNetwork.stable_softmax(a))
+    print(np.sum(NeuralNetwork.stable_softmax(a), axis=1))
+
+    print(NeuralNetwork.cross_entropy(a, c))
+
+    print(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
+    print(np.mean(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a))))
+
+    print(NeuralNetwork.delta_cross_entropy(a, c))  # Different because m division
+    print(NeuralNetwork.one_hot_cross_entropy_prime_with_softmax(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
+
+    neural_network = NeuralNetwork(4, [4, 4, 4], 3)
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()
