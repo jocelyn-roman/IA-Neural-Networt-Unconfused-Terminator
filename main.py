@@ -14,18 +14,18 @@ class NeuralNetwork(object):
     # This class was initially based on:
     # https://dev.to/shamdasani/build-a-flexible-neural-network-with-backpropagation-in-python
 
-    def __init__(self, input_size, hidden_sizes, output_size):
-        # parameters
-        self.sizes = [input_size] + hidden_sizes + [output_size]
+    def __init__(self, layers_sizes):
+        # Parameters and initializations
+        self.sizes = layers_sizes
         self.weights = []
         self.z = []
 
-        # random weights
+        # Random weights (XAVIER SHOULD BE IMPLEMENTED HERE)
         for i in range(len(self.sizes) - 1):
             self.weights.append(np.random.rand(self.sizes[i], self.sizes[i+1]))
 
     def forward(self, x):
-        # forward propagation through our network
+        # Forward propagation through our network
         self.z = [x]
         for W_i in self.weights:
             # dot product from the last result and W_i
@@ -33,7 +33,7 @@ class NeuralNetwork(object):
             # result passed through the activation function
             self.z.append(self.relu(product))
 
-        # the output is the last Z
+        # The output is the last Z
         output = self.z[-1]
         return output
 
@@ -45,12 +45,12 @@ class NeuralNetwork(object):
     @staticmethod
     def relu(x):
         # Rectified Linear Units (ReLU) activation function
-        # return np.maximum(x, 0, x) it modifies x, which is the reference
+        # return np.maximum(x, 0, x) # it modifies x, which is the reference
         return x * (x > 0)
 
     @staticmethod
     def relu_prime(x):
-        # derivative of Rectified Linear Units (ReLU)
+        # Derivative of Rectified Linear Units (ReLU)
         return 1 * (x > 0)
 
     @staticmethod
@@ -137,19 +137,19 @@ def visualize_image(W, loss, title, i):
 
 
 def main():
-    # loading MNIST data set
+    # Loading MNIST data set
     data = MNIST("./MNIST_data_set")
     images, labels = data.load_training()
 
-    # converting to numpy arrays
+    # Converting to numpy arrays
     labels = np.array(labels)
     images = np.array(images)
 
-    # getting dimensions
+    # Getting dimensions
     first_layer = images.shape[1]
     last_layer = labels.max() + 1
 
-    neural_network = NeuralNetwork(first_layer, [50], last_layer)
+    neural_network = NeuralNetwork([first_layer, 50, last_layer])
 
 
 def test():
