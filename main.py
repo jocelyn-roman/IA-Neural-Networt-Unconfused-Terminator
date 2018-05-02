@@ -184,8 +184,6 @@ def test():
     print(NeuralNetwork.delta_cross_entropy(a, c))  # Different because m division
     print(NeuralNetwork.one_hot_cross_entropy_prime_with_softmax(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
 
-    neural_network = NeuralNetwork(4, [4, 4, 4], 3)
-
 
 if __name__ == "__main__":
     # main()
