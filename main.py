@@ -22,16 +22,21 @@ class NeuralNetwork(object):
 
         # Random weights (XAVIER SHOULD BE IMPLEMENTED HERE)
         for i in range(len(self.sizes) - 1):
-            self.weights.append(np.random.rand(self.sizes[i], self.sizes[i+1]))
+            self.weights.append(np.random.randn(self.sizes[i], self.sizes[i+1])/np.sqrt(self.sizes.shape[0]))
 
     def forward(self, x):
         # Forward propagation through our network
         self.z = [x]
         for W_i in self.weights:
             # dot product from the last result and W_i
-            product = np.dot(self.z[-1], W_i)
+            product = self.relu(np.dot(self.z[-1], W_i))
             # result passed through the activation function
-            self.z.append(self.relu(product))
+            #self.z.append(self.relu(product))
+
+            #result through softmax
+            resultSig =  self.softmax(np.dot(product[-1], W_i))
+
+            self.z.append(resultSig)
 
         # The output is the last Z
         output = self.z[-1]
