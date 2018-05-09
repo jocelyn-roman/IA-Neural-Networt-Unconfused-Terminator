@@ -24,22 +24,32 @@ class NeuralNetwork(object):
     def forward(self, x):
         # Forward propagation through our network
         # dot product from the last result and W_i passed through the activation function
-        out1 = self.relu(np.dot(x, self.model['W1']))
-        out2 = self.relu(np.dot(out1, self.model['W2']))
-        out3 = self.stable_softmax(np.dot(out2, self.model['W3']))
-        return out3
+        out_product1 = np.dot(x, self.model['W1'])
+        self.out_activation1 = self.relu(out_product1)
 
-    def backward(self, x, y, o):
-        o_error = y - o  # error in output
-        o_delta = o_error * self.one_hot_cross_entropy_prime_with_softmax(o)  # applying derivative of softmax to error
+        out_product2 = np.dot(self.out_activation1, self.model['W2'])
+        self.out_activation2 = self.relu(out_product2)
 
-        z2_error = o_delta.dot(self.weights[self.sizes-1].T)  # z2 error: how much our hidden layer weights contributed to output error
-        z2_delta = z2_error * self.relu_prime(self.z2)  # applying derivative of sigmoid to z2 error
-        #w2
-        self.W1 += x.T.dot(z2_delta)  # adjusting first set (input --> hidden) weights
-        self.W2 += self.z2.T.dot(o_delta)  # adjusting second set (hidden --> output) weights
+        out_product3 = np.dot(self.out_activation2, self.model['W3'])
+        out_activation3 = self.stable_softmax(out_product3)
 
-        return
+
+        return out_activation3
+
+    def backward(self, x, y, output, learning_rate=0.0085):
+        # y is a one_hot_vector
+        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(output)
+
+        hidden2_error = output_delta.dot(self.model['W3'].T)
+        hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
+
+        hidden1_error = hidden2_delta.dot(self.model['W2'].T)
+        hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
+
+        self.model['W3'] = self.out_activation2.T.dot(output_delta) * learning_rate
+        self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
+        self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
+
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
