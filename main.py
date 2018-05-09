@@ -14,35 +14,31 @@ class NeuralNetwork(object):
     # This class was initially based on:
     # https://dev.to/shamdasani/build-a-flexible-neural-network-with-backpropagation-in-python
 
-    def __init__(self, layers_sizes):
+    def __init__(self, inputs, hidden1, hidden2, output):
         # Parameters and initializations
-        self.sizes = layers_sizes
-        self.weights = []
-        self.z = []
-
-        # Random weights (XAVIER SHOULD BE IMPLEMENTED HERE)
-        for i in range(len(self.sizes) - 1):
-            self.weights.append(np.random.randn(self.sizes[i], self.sizes[i+1])/np.sqrt(self.sizes.shape[0]))
+        self.model = {}
+        self.model['W1'] = np.random.randn(inputs, hidden1)/np.sqrt(inputs)
+        self.model['W2'] = np.random.randn(hidden1, hidden2)/np.sqrt(hidden1)
+        self.model['W3'] = np.random.randn(hidden2, output)/np.sqrt(hidden2)
 
     def forward(self, x):
         # Forward propagation through our network
-        self.z = [x]
-        for W_i in self.weights:
-            # dot product from the last result and W_i
-            product = self.relu(np.dot(self.z[-1], W_i))
-            # result passed through the activation function
-            #self.z.append(self.relu(product))
-
-            #result through softmax
-            resultSig =  self.softmax(np.dot(product[-1], W_i))
-
-            self.z.append(resultSig)
-
-        # The output is the last Z
-        output = self.z[-1]
-        return output
+        # dot product from the last result and W_i passed through the activation function
+        out1 = self.relu(np.dot(x, self.model['W1']))
+        out2 = self.relu(np.dot(out1, self.model['W2']))
+        out3 = self.stable_softmax(np.dot(out2, self.model['W3']))
+        return out3
 
     def backward(self, x, y, o):
+        o_error = y - o  # error in output
+        o_delta = o_error * self.one_hot_cross_entropy_prime_with_softmax(o)  # applying derivative of softmax to error
+
+        z2_error = o_delta.dot(self.weights[self.sizes-1].T)  # z2 error: how much our hidden layer weights contributed to output error
+        z2_delta = z2_error * self.relu_prime(self.z2)  # applying derivative of sigmoid to z2 error
+        #w2
+        self.W1 += x.T.dot(z2_delta)  # adjusting first set (input --> hidden) weights
+        self.W2 += self.z2.T.dot(o_delta)  # adjusting second set (hidden --> output) weights
+
         return
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
@@ -154,7 +150,16 @@ def main():
     first_layer = images.shape[1]
     last_layer = labels.max() + 1
 
+    a = np.array([
+        [-0.13916012, -0.15914156, -0.03611553, -0.06629650],
+        [-0.25373585, 0.39812677, -0.24083797, -0.17328009],
+        [-0.12787567, 0.14076882, -0.36499643, -0.32951989],
+        [0.24145116, -0.01344613, 0.25512426, -0.31819186],
+        [-0.02645782, 0.56205276, 0.05822283, -0.19174236],
+        [0.11615288, -0.20608460, 0.05785365, -0.24800982]])
+
     neural_network = NeuralNetwork([first_layer, 50, last_layer])
+    neural_network.forward(a)
 
 
 def test():
@@ -169,6 +174,8 @@ def test():
     b = np.array([0, 1, 2, 1, 2, 0])
 
     c = np.array([3, 1, 2, 1, 2, 0])
+
+    #print(NeuralNetwork.forward(a))
 
     print(a.shape)
     print(NeuralNetwork.relu(a))
@@ -191,5 +198,5 @@ def test():
 
 
 if __name__ == "__main__":
-    # main()
-    test()
+     main()
+    #test()
