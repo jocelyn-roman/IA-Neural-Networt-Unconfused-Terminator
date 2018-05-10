@@ -16,10 +16,12 @@ class NeuralNetwork(object):
 
     def __init__(self, inputs, hidden1, hidden2, output):
         # Parameters and initializations
-        self.model = {}
-        self.model['W1'] = np.random.randn(inputs, hidden1)/np.sqrt(inputs)
-        self.model['W2'] = np.random.randn(hidden1, hidden2)/np.sqrt(hidden1)
-        self.model['W3'] = np.random.randn(hidden2, output)/np.sqrt(hidden2)
+        # Before ReLU weights are multiplied by 2 since the half of its input is 0
+        # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
+        self.model = dict()
+        self.model['W1'] = 2 * np.random.randn(inputs, hidden1) / np.sqrt(inputs)
+        self.model['W2'] = 2 * np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
+        self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
 
     def forward(self, x):
         # Forward propagation through our network
@@ -187,10 +189,12 @@ def visualize_image(W, loss, title, i):
 
 def main():
     # Loading MNIST data set
+    print("Loading MNIST data set")
     data = MNIST("./MNIST_data_set")
     images, labels = data.load_training()
 
     # Converting to numpy arrays
+    print("Preparing data")
     labels = np.array(labels)
     images = np.array(images)
 
@@ -198,16 +202,13 @@ def main():
     first_layer = images.shape[1]
     last_layer = labels.max() + 1
 
-    a = np.array([
-        [-0.13916012, -0.15914156, -0.03611553, -0.06629650],
-        [-0.25373585, 0.39812677, -0.24083797, -0.17328009],
-        [-0.12787567, 0.14076882, -0.36499643, -0.32951989],
-        [0.24145116, -0.01344613, 0.25512426, -0.31819186],
-        [-0.02645782, 0.56205276, 0.05822283, -0.19174236],
-        [0.11615288, -0.20608460, 0.05785365, -0.24800982]])
+    # Creating neural network
+    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
 
-    neural_network = NeuralNetwork([first_layer, 50, last_layer])
-    neural_network.forward(a)
+    # WORKING ON...
+    result = neural_network.forward(images)
+    print(result.shape)
+    print(np.sum(result[0]))
 
 
 def test():
@@ -223,7 +224,7 @@ def test():
 
     c = np.array([3, 1, 2, 1, 2, 0])
 
-    #print(NeuralNetwork.forward(a))
+    # print(NeuralNetwork.forward(a))
 
     print(a.shape)
     print(NeuralNetwork.relu(a))
@@ -246,5 +247,5 @@ def test():
 
 
 if __name__ == "__main__":
-     main()
-    #test()
+    # main()
+    test()
