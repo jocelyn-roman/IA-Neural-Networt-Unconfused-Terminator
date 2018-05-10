@@ -35,18 +35,16 @@ class NeuralNetwork(object):
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
         out_activation3 = self.stable_softmax(out_product3)
 
-
         return out_activation3
 
-    def forward_propagation_with_dropout(self,x, keep_prob=0.5):
-
+    def forward_propagation_with_dropout(self, x, keep_prob=0.5):
         # Implement Forward Propagation to calculate A2 (probabilities)
         out_product1 = np.dot(x, self.model['W1'])
         self.out_activation1 = self.relu(out_product1)
 
-
         # Dropout
-        d1 = np.random.rand(self.out_activation1.shape[0], self.out_activation1.shape[1])  # Step 1: initialize matrix D1 = np.random.rand(..., ...)
+        # Step 1: initialize matrix D1 = np.random.rand(..., ...)
+        d1 = np.random.rand(self.out_activation1.shape[0], self.out_activation1.shape[1])
         d1 = d1 < keep_prob  # Step 2: convert entries of D1 to 0 or 1 (using keep_prob as the threshold)
         self.out_activation1 = np.multiply(self.out_activation1, d1)
         self.out_activation1 = self.out_activation1/keep_prob
@@ -57,11 +55,11 @@ class NeuralNetwork(object):
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
         out_activation3 = self.stable_softmax(out_product3)
 
-        return out_activation3,d1
+        return out_activation3, d1
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(output)
+        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -73,17 +71,18 @@ class NeuralNetwork(object):
         self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
         self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
 
-    def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob,learning_rate=0.0085):
-
+    def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(output)
+        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
         # dropout
         hidden1_error = hidden2_delta.dot(self.model['W2'].T)
-        hidden1_error = np.multiply(d1, hidden1_error) # Step 1: Apply mask D2 to shut down the same neurons as during the forward propagation
-        hidden1_error = hidden1_error / keep_prob  # Step 2: Scale the value of neurons that haven't been shut down
+        # Step 1: Apply mask D2 to shut down the same neurons as during the forward propagation
+        hidden1_error = np.multiply(d1, hidden1_error)
+        # Step 2: Scale the value of neurons that haven't been shut down
+        hidden1_error = hidden1_error / keep_prob
 
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
         # reload w
