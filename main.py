@@ -43,13 +43,11 @@ class NeuralNetwork(object):
         self.out_activation1 = self.relu(out_product1)
 
 
-        #Dropout
+        # Dropout
         d1 = np.random.rand(self.out_activation1.shape[0], self.out_activation1.shape[1])  # Step 1: initialize matrix D1 = np.random.rand(..., ...)
         d1 = d1 < keep_prob  # Step 2: convert entries of D1 to 0 or 1 (using keep_prob as the threshold)
         self.out_activation1 = np.multiply(self.out_activation1, d1)
         self.out_activation1 = self.out_activation1/keep_prob
-
-
 
         out_product2 = np.dot(self.out_activation1, self.model['W2'])
         self.out_activation2 = self.relu(out_product2)
@@ -57,9 +55,7 @@ class NeuralNetwork(object):
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
         out_activation3 = self.stable_softmax(out_product3)
 
-        return out_activation3
-
-
+        return out_activation3,d1
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
@@ -75,27 +71,23 @@ class NeuralNetwork(object):
         self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
         self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
 
-    """
-    def backward_propagation_with_dropout(self, x, y, out, keep_prob):
+    def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob,learning_rate=0.0085):
 
+        # y is a one_hot_vector
+        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(output)
 
+        hidden2_error = output_delta.dot(self.model['W3'].T)
+        hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
+        # dropout
+        hidden1_error = hidden2_delta.dot(self.model['W2'].T)
+        hidden1_error = np.multiply(d1, hidden1_error) # Step 1: Apply mask D2 to shut down the same neurons as during the forward propagation
+        hidden1_error = hidden1_error / keep_prob  # Step 2: Scale the value of neurons that haven't been shut down
 
-        # Backward propagation: calculate dW1, db1, dW2, db2.
-        dZ2 = A2 - y
-        dW2 = (1.0 / x) * np.matmul(dZ2, np.transpose(A1))
-        db2 = (1.0 / x) * np.sum(dZ2, axis=1, keepdims=True)
-        dA1 = np.dot(W2.T, dZ2)
-        ## Dropout
-        dA1 = np.multiply(D1,
-                          dA1)  # Step 1: Apply mask D2 to shut down the same neurons as during the forward propagation
-        dA1 = dA1 / keep_prob  # Step 2: Scale the value of neurons that haven't been shut down
-
-        dZ1 = np.multiply(dA1, np.int64(A1 > 0))
-        dW1 = (1.0 / x) * np.matmul(dZ1, np.transpose(X))
-        db1 = (1.0 / x) * np.sum(dZ1, axis=1, keepdims=True)
-"""
-
-
+        hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
+        # reload w
+        self.model['W3'] = self.out_activation2.T.dot(output_delta) * learning_rate
+        self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
+        self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
