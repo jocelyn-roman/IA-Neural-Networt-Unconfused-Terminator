@@ -36,6 +36,31 @@ class NeuralNetwork(object):
 
         return out_activation3
 
+    def forward_propagation_with_dropout(self,x, keep_prob=0.5):
+    
+        # Implement Forward Propagation to calculate A2 (probabilities)
+        out_product1 = np.dot(x, self.model['W1'])
+        self.out_activation1 = self.relu(out_product1)
+
+
+        #Dropout
+        d1 = np.random.rand(self.out_activation1.shape[0], self.out_activation1.shape[1])  # Step 1: initialize matrix D1 = np.random.rand(..., ...)
+        d1 = d1 < keep_prob  # Step 2: convert entries of D1 to 0 or 1 (using keep_prob as the threshold)
+        self.out_activation1 = np.multiply(self.out_activation1, d1)
+        self.out_activation1 = self.out_activation1/keep_prob
+
+
+
+        out_product2 = np.dot(self.out_activation1, self.model['W2'])
+        self.out_activation2 = self.relu(out_product2)
+
+        out_product3 = np.dot(self.out_activation2, self.model['W3'])
+        out_activation3 = self.stable_softmax(out_product3)
+
+        return out_activation3
+
+
+
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
         output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(output)
