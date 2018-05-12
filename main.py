@@ -25,7 +25,6 @@ class NeuralNetwork(object):
 
     def forward(self, x):
         # Forward propagation through our network
-        # dot product from the last result and W_i passed through the activation function
         out_product1 = np.dot(x, self.model['W1'])
         self.out_activation1 = self.relu(out_product1)
 
@@ -66,6 +65,12 @@ class NeuralNetwork(object):
 
         hidden1_error = hidden2_delta.dot(self.model['W2'].T)
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
+
+        # Este print imprime los Ws antes de actualizarlos
+        # En la segunda iteracion ya son nans
+        print(self.model["W1"])
+        print(self.model["W2"])
+        print(self.model["W3"])
 
         self.model['W3'] = self.out_activation2.T.dot(output_delta) * learning_rate
         self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
@@ -162,9 +167,32 @@ class NeuralNetwork(object):
         # q is the result vector from softmax
         return q - p
 
-    def train(self, x, y):
-        o = self.forward(x)
-        self.backward(x, y, o)
+    def train(self, x, y, batch_size, epoch):
+
+        # Converting labels to one-hot encoding
+        labels = self.to_one_hot(y)
+
+        # Calculating batch size
+        total = x.shape[0]
+        batches = total / batch_size
+
+        # Dividing by mini-batches
+        batches_data = np.split(x, batches, axis=0)
+        batches_labels = np.split(labels, batches, axis=0)
+
+        # For each epoch
+        for i in range(epoch):
+            print("Epoch #", i)
+            # Take each mini-batch and train
+            for batch_data, batch_labels in zip(batches_data, batches_labels):
+                # Jocelyn... Cuando lo corra y vea nans detengalo y vayase arriba.
+                # El primer output tiene resultados, los demás son nan
+                print(batch_data.shape)
+                print(batch_labels.shape)
+                output = self.forward(batch_data)
+                print(output)
+                # Vaya a esta funcion y revise los prints que puse
+                self.backward(batch_data, batch_labels, output, learning_rate=0.0085)
 
 
 def visualize_image(W, loss, title, i):
@@ -188,26 +216,29 @@ def visualize_image(W, loss, title, i):
 
 def main():
     # Loading MNIST data set
-    print("Loading MNIST data set")
+    print("Loading MNIST data set...")
     data = MNIST("./MNIST_data_set")
-    images, labels = data.load_training()
+    training_images, training_labels = data.load_training()
+    test_images, test_labels = data.load_testing()
 
     # Converting to numpy arrays
-    print("Preparing data")
-    labels = np.array(labels)
-    images = np.array(images)
+    print("Preparing data...")
+    training_images = np.array(training_images)
+    training_labels = np.array(training_labels)
+    test_images = np.array(test_images)
+    test_labels = np.array(test_labels)
 
     # Getting dimensions
-    first_layer = images.shape[1]
-    last_layer = labels.max() + 1
+    first_layer = training_images.shape[1]
+    last_layer = training_labels.max() + 1
 
     # Creating neural network
+    print("Initializing neural network...")
     neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
 
     # WORKING ON...
-    result = neural_network.forward(images)
-    print(result.shape)
-    print(np.sum(result[0]))
+    print("WORKING ON... TRAINING...")
+    neural_network.train(training_images, training_labels, 32, 1)
 
 
 def test():
@@ -246,5 +277,5 @@ def test():
 
 
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()
