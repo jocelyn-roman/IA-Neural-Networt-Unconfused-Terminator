@@ -34,6 +34,7 @@ class NeuralNetwork(object):
 
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
         out_activation3 = self.stable_softmax(out_product3)
+        out_activation3 = self.softmax(out_product3)
 
         return out_activation3
 
@@ -59,7 +60,9 @@ class NeuralNetwork(object):
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
+        output_delta = output
+        output_delta[range(x.shape[0]), y] -= 1
+        #output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -191,11 +194,17 @@ def main():
     print("Loading MNIST data set")
     data = MNIST("./MNIST_data_set")
     images, labels = data.load_training()
+    X_test, y_test =  data.load_testing()
 
     # Converting to numpy arrays
     print("Preparing data")
-    labels = np.array(labels)
-    images = np.array(images)
+    #labels = np.array(labels)
+    #images = np.array(images)
+    images = np.array(X_test)
+    labels = np.array(y_test)
+
+   # print('Rows: , columns: ', images.shape[0], images.shape[1])
+    #print('Rows: , columns: ', X_test.shape[0], X_test.shape[1])
 
     # Getting dimensions
     first_layer = images.shape[1]
@@ -203,10 +212,14 @@ def main():
 
     # Creating neural network
     neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
-
+    #print("W3", neural_network.model['W3'])
+    #print("W2", neural_network.model['W2'])
+    #print("W1", neural_network.model['W1'])
     # WORKING ON...
     result = neural_network.forward(images)
+    #neural_network.backward(images, labels, result)
     print(result.shape)
+   # print(result)
     print(np.sum(result[0]))
 
 
