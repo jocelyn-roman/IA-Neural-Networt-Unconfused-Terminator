@@ -19,8 +19,8 @@ class NeuralNetwork(object):
         # Before ReLU weights are multiplied by 2 since the half of its input is 0
         # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         self.model = dict()
-        self.model['W1'] = 2 * np.random.randn(inputs, hidden1) / np.sqrt(inputs)
-        self.model['W2'] = 2 * np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
+        self.model['W1'] = np.random.randn(inputs, hidden1) / np.sqrt(inputs)
+        self.model['W2'] =  np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
         self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
 
     def forward(self, x):
@@ -33,7 +33,6 @@ class NeuralNetwork(object):
         self.out_activation2 = self.relu(out_product2)
 
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
-        out_activation3 = self.stable_softmax(out_product3)
         out_activation3 = self.softmax(out_product3)
 
         return out_activation3
@@ -98,13 +97,13 @@ class NeuralNetwork(object):
     @staticmethod
     def relu(x):
         # Rectified Linear Units (ReLU) activation function
-        # return np.maximum(x, 0, x) # it modifies x, which is the reference
+        #return np.maximum(x, 0) # it modifies x, which is the reference
         return x * (x > 0)
 
     @staticmethod
     def relu_prime(x):
         # Derivative of Rectified Linear Units (ReLU)
-        return 1 * (x > 0)
+        return 1. * (x > 0)
 
     @staticmethod
     def to_one_hot(y):
@@ -211,16 +210,18 @@ def main():
     last_layer = labels.max() + 1
 
     # Creating neural network
-    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network = NeuralNetwork(first_layer, 512, 128,last_layer )
     #print("W3", neural_network.model['W3'])
     #print("W2", neural_network.model['W2'])
     #print("W1", neural_network.model['W1'])
     # WORKING ON...
     result = neural_network.forward(images)
-    #neural_network.backward(images, labels, result)
+    neural_network.backward(images, labels, result)
+    result2=neural_network.forward(images)
     print(result.shape)
-   # print(result)
+    print(result2)
     print(np.sum(result[0]))
+    print(np.sum(result2[0]))
 
 
 def test():
@@ -259,5 +260,5 @@ def test():
 
 
 if __name__ == "__main__":
-    # main()
-    test()
+     main()
+    #test()
