@@ -19,8 +19,8 @@ class NeuralNetwork(object):
         # Before ReLU weights are multiplied by 2 since the half of its input is 0
         # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         self.model = dict()
-        self.model['W1'] = 2 * np.random.randn(inputs, hidden1) / np.sqrt(inputs)
-        self.model['W2'] = 2 * np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
+        self.model['W1'] =  np.random.randn(inputs, hidden1) / np.sqrt(inputs)
+        self.model['W2'] = np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
         self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
 
     def forward(self, x):
