@@ -247,16 +247,17 @@ def main():
     # WORKING ON...
     # test forward and backward
     labels = neural_network.to_one_hot(test_labels)
+    i = 0
+    while (i<10):
+        result = neural_network.forward(test_images)
+        loss = neural_network.cross_entropy_loss(labels, result)
+        print(loss)
+        print(neural_network.accuracy(result, labels))
+        neural_network.backward(test_images, labels, result)
+        i+=1
 
-    result = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(labels, result)
-    print(loss)
-    print(neural_network.accuracy(result, labels))
-    neural_network.backward(test_images, labels, result)
-    result2 = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(labels, result2)
-    print(loss)
-    print(neural_network.accuracy(result2, labels))
+
+
 
     # test dropout
 
