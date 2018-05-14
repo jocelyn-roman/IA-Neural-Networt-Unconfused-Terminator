@@ -72,7 +72,7 @@ class NeuralNetwork(object):
 
     def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
+        output_delta = self.one_hot_cross_entropy_prime_with_softmax(y, output) / y.shape[0]
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -85,9 +85,9 @@ class NeuralNetwork(object):
 
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
         # reload w
-        self.model['W3'] = (self.out_activation2.T.dot(output_delta) * 0.01) * learning_rate
-        self.model['W2'] = (self.out_activation1.T.dot(hidden2_delta) * 0.01) * learning_rate
-        self.model['W1'] = (x.T.dot(hidden1_delta) * 0.01) * learning_rate
+        self.model['W3'] -= (self.out_activation2.T.dot(output_delta)) * learning_rate
+        self.model['W2'] -= (self.out_activation1.T.dot(hidden2_delta)) * learning_rate
+        self.model['W1'] -= (x.T.dot(hidden1_delta)) * learning_rate
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
@@ -210,12 +210,12 @@ class NeuralNetwork(object):
 
             # Take each mini-batch and train
             for mini_data, mini_labels in zip(batch_data, batch_labels):
-                output = self.forward(mini_data)
+                output, d1 = self.forward_propagation_with_dropout(mini_data)
                 loss = self.cross_entropy_loss(mini_labels, output)
                 accuracy = self.accuracy(output, mini_labels)
                 print("Loss: ", loss)
                 print("Accuracy: ", accuracy)
-                self.backward(mini_data, mini_labels, output)
+                self.backward_propagation_with_dropout(mini_data, mini_labels, output, d1, 0.5)
 
             # Validating
             output = self.forward(validation)
