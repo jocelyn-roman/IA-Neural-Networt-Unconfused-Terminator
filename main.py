@@ -58,8 +58,6 @@ class NeuralNetwork(object):
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        # output_delta = output
-        # output_delta[range(x.shape[0]), y] -= 1
         output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
@@ -90,16 +88,6 @@ class NeuralNetwork(object):
         self.model['W3'] = (self.out_activation2.T.dot(output_delta) * 0.01) * learning_rate
         self.model['W2'] = (self.out_activation1.T.dot(hidden2_delta) * 0.01) * learning_rate
         self.model['W1'] = (x.T.dot(hidden1_delta) * 0.01) * learning_rate
-
-    @staticmethod
-    def accuracy(output, labels):
-        # Gets the total element count
-        total = output.shape[0]
-        # Gets the difference between the indices of the maximum values
-        difference = np.argmax(output, axis=1) - np.argmax(labels, axis=1)
-        # Counts the correct predictions (zeros)
-        correct = np.count_nonzero(difference == 0)
-        return correct / total
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
@@ -142,7 +130,6 @@ class NeuralNetwork(object):
         m = y.shape[0]
         p = NeuralNetwork.softmax(x)
         log_likelihood = -np.log(p[range(m), y])
-        print(log_likelihood)
         loss = np.sum(log_likelihood) / m
         return loss
 
@@ -161,6 +148,7 @@ class NeuralNetwork(object):
 
     @staticmethod
     def one_hot_cross_entropy(p, q):
+        # Returns a vector with loss per data
         # p are the one-hot labels
         # q is the result vector from softmax
         return -np.sum(p * np.log(q), axis=1)
@@ -170,6 +158,23 @@ class NeuralNetwork(object):
         # p are the one-hot labels
         # q is the result vector from softmax
         return q - p
+
+    @staticmethod
+    def cross_entropy_loss(p, q):
+        # Returns a averaged value for all data
+        # p are the one-hot labels
+        # q is the result vector from softmax
+        return np.mean(NeuralNetwork.one_hot_cross_entropy(p, q))
+
+    @staticmethod
+    def accuracy(output, labels):
+        # Gets the total element count
+        total = output.shape[0]
+        # Gets the difference between the indices of the maximum values
+        difference = np.argmax(output, axis=1) - np.argmax(labels, axis=1)
+        # Counts the correct predictions (zeros)
+        correct = np.count_nonzero(difference == 0)
+        return correct / total
 
     def train(self, x, y, batch_size, epoch):
 
