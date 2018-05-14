@@ -95,6 +95,16 @@ class NeuralNetwork(object):
         self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
         self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
 
+    @staticmethod
+    def accuracy(output, labels):
+        # Gets the total element count
+        total = output.shape[0]
+        # Gets the difference between the indices of the maximum values
+        difference = np.argmax(output, axis=1) - np.argmax(labels, axis=1)
+        # Counts the correct predictions (zeros)
+        correct = np.count_nonzero(difference == 0)
+        return correct / total
+
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
     @staticmethod
@@ -183,16 +193,21 @@ class NeuralNetwork(object):
         # For each epoch
         for i in range(epoch):
             print("Epoch #", i)
+
+            i = 0
+
             # Take each mini-batch and train
             for batch_data, batch_labels in zip(batches_data, batches_labels):
                 # Jocelyn... Cuando lo corra y vea nans detengalo y vayase arriba.
                 # El primer output tiene resultados, los demás son nan
-                print(batch_data.shape)
-                print(batch_labels.shape)
                 output = self.forward(batch_data)
                 print(output)
                 # Vaya a esta funcion y revise los prints que puse
                 self.backward(batch_data, batch_labels, output, learning_rate=0.0085)
+
+                if i == 2:
+                    break
+                i += 1
 
 
 def visualize_image(W, loss, title, i):
