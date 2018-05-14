@@ -53,15 +53,15 @@ class NeuralNetwork(object):
         self.out_activation2 = self.relu(out_product2)
 
         out_product3 = np.dot(self.out_activation2, self.model['W3'])
-        out_activation3 = self.stable_softmax(out_product3)
+        out_activation3 = self.softmax(out_product3)
 
         return out_activation3, d1
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = output
-        output_delta[range(x.shape[0]), y] -= 1
-        #output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
+        # output_delta = output
+        # output_delta[range(x.shape[0]), y] -= 1
+        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -69,9 +69,9 @@ class NeuralNetwork(object):
         hidden1_error = hidden2_delta.dot(self.model['W2'].T)
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
 
-        self.model['W3'] = self.out_activation2.T.dot(output_delta) * learning_rate
-        self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
-        self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
+        self.model['W3'] = ( self.out_activation2.T.dot(output_delta) * 0.01) * learning_rate
+        self.model['W2'] = ( self.out_activation1.T.dot(hidden2_delta) * 0.01) * learning_rate
+        self.model['W1'] = (x.T.dot(hidden1_delta) * 0.01) * learning_rate
 
     def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob, learning_rate=0.0085):
         # y is a one_hot_vector
@@ -88,16 +88,16 @@ class NeuralNetwork(object):
 
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
         # reload w
-        self.model['W3'] = self.out_activation2.T.dot(output_delta) * learning_rate
-        self.model['W2'] = self.out_activation1.T.dot(hidden2_delta) * learning_rate
-        self.model['W1'] = x.T.dot(hidden1_delta) * learning_rate
+        self.model['W3'] = (self.out_activation2.T.dot(output_delta) * 0.01) * learning_rate
+        self.model['W2'] = (self.out_activation1.T.dot(hidden2_delta) * 0.01) * learning_rate
+        self.model['W1'] = (x.T.dot(hidden1_delta) * 0.01) * learning_rate
 
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
     @staticmethod
     def relu(x):
         # Rectified Linear Units (ReLU) activation function
-        #return np.maximum(x, 0) # it modifies x, which is the reference
+        # return np.maximum(x, 0) # it modifies x, which is the reference
         return x * (x > 0)
 
     @staticmethod
@@ -193,35 +193,49 @@ def main():
     print("Loading MNIST data set")
     data = MNIST("./MNIST_data_set")
     images, labels = data.load_training()
-    X_test, y_test =  data.load_testing()
+    X_test, y_test = data.load_testing()
 
     # Converting to numpy arrays
     print("Preparing data")
-    #labels = np.array(labels)
-    #images = np.array(images)
+    # labels = np.array(labels)
+    # images = np.array(images)
     images = np.array(X_test)
     labels = np.array(y_test)
 
-   # print('Rows: , columns: ', images.shape[0], images.shape[1])
-    #print('Rows: , columns: ', X_test.shape[0], X_test.shape[1])
+    # print('Rows: , columns: ', images.shape[0], images.shape[1])
+    # print('Rows: , columns: ', X_test.shape[0], X_test.shape[1])
 
     # Getting dimensions
     first_layer = images.shape[1]
     last_layer = labels.max() + 1
 
     # Creating neural network
-    neural_network = NeuralNetwork(first_layer, 512, 128,last_layer )
-    #print("W3", neural_network.model['W3'])
-    #print("W2", neural_network.model['W2'])
-    #print("W1", neural_network.model['W1'])
+    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    # print("W3", neural_network.model['W3'])
+    # print("W2", neural_network.model['W2'])
+    # print("W1", neural_network.model['W1'])
+
     # WORKING ON...
-    result = neural_network.forward(images)
+    images = np.divide(images, 255)
+    # test forward and backward
+    result, d1 = neural_network.forward(images)
+    labels = neural_network.to_one_hot(labels)
+    loss = neural_network.one_hot_cross_entropy(labels, result)
+    print(loss)
     neural_network.backward(images, labels, result)
-    result2=neural_network.forward(images)
+    result2 = neural_network.forward(images)
+    loss = neural_network.one_hot_cross_entropy(labels, result2)
+    print(loss)
+
+    # test dropout
+
+    # result,d1 = neural_network.forward_propagation_with_dropout(images)
+    # labels = neural_network.to_one_hot(labels)
+    # neural_network.backward_propagation_with_dropout(images, labels, result,d1,0.03)
+    # result2 = neural_network.forward_propagation_with_dropout(images)
+
     print(result.shape)
-    print(result2)
     print(np.sum(result[0]))
-    print(np.sum(result2[0]))
 
 
 def test():
@@ -261,4 +275,4 @@ def test():
 
 if __name__ == "__main__":
      main()
-    #test()
+    # test()
