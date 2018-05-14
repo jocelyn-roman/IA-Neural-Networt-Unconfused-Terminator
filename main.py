@@ -58,7 +58,7 @@ class NeuralNetwork(object):
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = output * (self.one_hot_cross_entropy_prime_with_softmax(y, output) / y.shape[0])
+        output_delta = self.one_hot_cross_entropy_prime_with_softmax(y, output) / y.shape[0]
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -292,14 +292,14 @@ def main():
     print(accuracy)
 
     # CODIGO JOCELYN XD
-    labels = neural_network.to_one_hot(test_labels)
     i = 0
     while i < 10:
         result = neural_network.forward(test_images)
-        loss = neural_network.cross_entropy_loss(labels, result)
+        loss = neural_network.cross_entropy_loss(test_labels, result)
+        accuracy = neural_network.accuracy(result, test_labels)
         print(loss)
-        print(neural_network.accuracy(result, labels))
-        neural_network.backward(test_images, labels, result)
+        print(accuracy)
+        neural_network.backward(test_images, test_labels, result)
         i += 1
 
 
