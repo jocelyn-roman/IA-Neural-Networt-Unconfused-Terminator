@@ -276,15 +276,6 @@ def main():
 
     # test forward and backward
     test_labels = neural_network.to_one_hot(test_labels)
-    labels = neural_network.to_one_hot(test_labels)
-    i = 0
-    while (i<10):
-        result = neural_network.forward(test_images)
-        loss = neural_network.cross_entropy_loss(labels, result)
-        print(loss)
-        print(neural_network.accuracy(result, labels))
-        neural_network.backward(test_images, labels, result)
-        i+=1
 
     result = neural_network.forward(test_images)
     loss = neural_network.cross_entropy_loss(test_labels, result)
@@ -299,6 +290,17 @@ def main():
     accuracy = neural_network.accuracy(result, test_labels)
     print(loss)
     print(accuracy)
+
+    # CODIGO JOCELYN XD
+    labels = neural_network.to_one_hot(test_labels)
+    i = 0
+    while i < 10:
+        result = neural_network.forward(test_images)
+        loss = neural_network.cross_entropy_loss(labels, result)
+        print(loss)
+        print(neural_network.accuracy(result, labels))
+        neural_network.backward(test_images, labels, result)
+        i += 1
 
 
 def test():
