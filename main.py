@@ -19,7 +19,7 @@ class NeuralNetwork(object):
         # Before ReLU weights are multiplied by 2 since the half of its input is 0
         # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         self.model = dict()
-        self.model['W1'] =  np.random.randn(inputs, hidden1) / np.sqrt(inputs)
+        self.model['W1'] = np.random.randn(inputs, hidden1) / np.sqrt(inputs)
         self.model['W2'] = np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
         self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
 
@@ -58,7 +58,7 @@ class NeuralNetwork(object):
 
     def backward(self, x, y, output, learning_rate=0.0085):
         # y is a one_hot_vector
-        output_delta = y * self.one_hot_cross_entropy_prime_with_softmax(y, output)
+        output_delta = output * (self.one_hot_cross_entropy_prime_with_softmax(y, output) / y.shape[0])
 
         hidden2_error = output_delta.dot(self.model['W3'].T)
         hidden2_delta = hidden2_error * self.relu_prime(self.out_activation2)
@@ -66,9 +66,9 @@ class NeuralNetwork(object):
         hidden1_error = hidden2_delta.dot(self.model['W2'].T)
         hidden1_delta = hidden1_error * self.relu_prime(self.out_activation1)
 
-        self.model['W3'] = (self.out_activation2.T.dot(output_delta) * 0.01) * learning_rate
-        self.model['W2'] = (self.out_activation1.T.dot(hidden2_delta) * 0.01) * learning_rate
-        self.model['W1'] = (x.T.dot(hidden1_delta) * 0.01) * learning_rate
+        self.model['W3'] -= (self.out_activation2.T.dot(output_delta)) * learning_rate
+        self.model['W2'] -= (self.out_activation1.T.dot(hidden2_delta)) * learning_rate
+        self.model['W1'] -= (x.T.dot(hidden1_delta)) * learning_rate
 
     def backward_propagation_with_dropout(self, x, y, output, d1, keep_prob, learning_rate=0.0085):
         # y is a one_hot_vector
@@ -181,28 +181,53 @@ class NeuralNetwork(object):
         # Converting labels to one-hot encoding
         labels = self.to_one_hot(y)
 
-        # Calculating batch size
-        total = x.shape[0]
-        batches = total / batch_size
-
-        # Dividing by mini-batches
-        batches_data = np.split(x, batches, axis=0)
-        batches_labels = np.split(labels, batches, axis=0)
+        eighty = int(round(x.shape[0] * 0.8))
 
         # For each epoch
         for i in range(epoch):
             print("Epoch #", i)
 
+            # Randomly select training and validation set by 80% - 20%
+            # This is called Holdout method
+            # https://en.wikipedia.org/wiki/Cross-validation_(statistics)#Holdout_method
+            # https://stackoverflow.com/questions/3674409/how-to-split-partition-a-dataset-into-training-and-test-datasets-for-e-g-cros
+            indices = np.random.permutation(x.shape[0])
+            training_idx, validation_idx = indices[:eighty], indices[eighty:]
+            training, validation = x[training_idx, :], x[validation_idx, :]
+            training_labels, validation_labels = labels[training_idx, :], labels[validation_idx, :]
+
+            # Uncomment following lines for non cross-validation
+            # training, validation = x, x
+            # training_labels, validation_labels = labels, labels
+
+            # Calculating batch size
+            total = training.shape[0]
+            batches = total / batch_size
+
+            # Dividing by mini-batches
+            batch_data = np.split(training, batches, axis=0)
+            batch_labels = np.split(training_labels, batches, axis=0)
+
             # Take each mini-batch and train
-            for batch_data, batch_labels in zip(batches_data, batches_labels):
-                output = self.forward(batch_data)
-                print(output)
-                self.backward(batch_data, batch_labels, output, learning_rate=0.0085)
+            for mini_data, mini_labels in zip(batch_data, batch_labels):
+                output = self.forward(mini_data)
+                loss = self.cross_entropy_loss(mini_labels, output)
+                accuracy = self.accuracy(output, mini_labels)
+                print("Loss: ", loss)
+                print("Accuracy: ", accuracy)
+                self.backward(mini_data, mini_labels, output)
+
+            # Validating
+            output = self.forward(validation)
+            loss = self.cross_entropy_loss(validation_labels, output)
+            accuracy = self.accuracy(output, validation_labels)
+            print("Loss: ", loss)
+            print("Accuracy: ", accuracy)
 
 
 def visualize_image(W, loss, title, i):
     # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
-    element = W[:, i]
+    element = W[i, :]
     img = element.reshape(28, 28)
     plt.imshow(img, cmap='gray')
     plt.title("W " + str(i) + "th with loss of " + str(loss))
@@ -240,12 +265,17 @@ def main():
     # Creating neural network
     print("Initializing neural network...")
     neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
-    # print("W3", neural_network.model['W3'])
-    # print("W2", neural_network.model['W2'])
-    # print("W1", neural_network.model['W1'])
 
     # WORKING ON...
+    print("WORKING ON...")
+    neural_network.train(training_images, training_labels, 32, 5)
+
+    print("TRAINING ENDED")
+
+    print("TESTING...")
+
     # test forward and backward
+    test_labels = neural_network.to_one_hot(test_labels)
     labels = neural_network.to_one_hot(test_labels)
     i = 0
     while (i<10):
@@ -256,18 +286,19 @@ def main():
         neural_network.backward(test_images, labels, result)
         i+=1
 
+    result = neural_network.forward(test_images)
+    loss = neural_network.cross_entropy_loss(test_labels, result)
+    accuracy = neural_network.accuracy(result, test_labels)
+    print(loss)
+    print(accuracy)
 
+    neural_network.backward(test_images, test_labels, result)
 
-
-    # test dropout
-
-    # result,d1 = neural_network.forward_propagation_with_dropout(images)
-    # labels = neural_network.to_one_hot(labels)
-    # neural_network.backward_propagation_with_dropout(images, labels, result,d1,0.03)
-    # result2 = neural_network.forward_propagation_with_dropout(images)
-
-    print(result.shape)
-    print(np.sum(result[0]))
+    result = neural_network.forward(test_images)
+    loss = neural_network.cross_entropy_loss(test_labels, result)
+    accuracy = neural_network.accuracy(result, test_labels)
+    print(loss)
+    print(accuracy)
 
 
 def test():
