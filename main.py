@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from mnist import MNIST
 import numpy as np
 from PIL import Image
+import pickle
 # import os # in case of file saving
 
 
@@ -186,13 +187,25 @@ class NeuralNetwork(object):
         correct = np.count_nonzero(difference == 0)
         return correct / total
 
+    # Save/Load weights from: https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
+
+    def save(self, filename):
+        # Saves weights in file
+        with open(filename, 'wb') as handle:
+            pickle.dump(self.model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def load(self, filename):
+        # Loads weights from file
+        with open(filename, 'rb') as handle:
+            self.model = pickle.load(handle)
+
     def plot(self):
         # The plot shows the learning behavior
 
         fig, ax1 = plt.subplots()
 
         color = 'tab:blue'
-        ax1.set_xlabel('Generations')
+        ax1.set_xlabel('Epoch')
         ax1.set_ylabel('Loss', color=color)
         ax1.plot(self.graph['epoch'], self.graph['loss'], color=color)
         ax1.tick_params(axis='y', labelcolor=color)
@@ -259,6 +272,19 @@ class NeuralNetwork(object):
             self.graph['accuracy'].append(accuracy)
             self.graph['epoch'].append(i + 1)
 
+    def test(self, x, y):
+        # Converting labels to one-hot encoding
+        labels = self.to_one_hot(y)
+
+        # Doing feed forward
+        output = self.forward(x)
+
+        # Calculating loss and accuracy
+        loss = self.cross_entropy_loss(labels, output)
+        accuracy = self.accuracy(output, labels)
+
+        return loss, accuracy
+
 
 def visualize_image(x, loss, title):
     # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
@@ -276,6 +302,15 @@ def visualize_image(x, loss, title):
         os.makedirs(directory)
     plt.savefig(directory + "/img" + str(i))
     '''
+
+
+def plot_probability(probability):
+    # Based on: https://plot.ly/matplotlib/bar-charts/
+    y = probability
+    x = range(10)
+    width = 1 / 1.5
+    plt.bar(x, y, width, color="blue")
+    plt.show()
 
 
 def load_image(file):
@@ -318,15 +353,104 @@ def main():
 
     # Training neural network
     print("Training...")
-    neural_network.train(training_images, training_labels, 32, 3)
+    neural_network.train(training_images, training_labels, 32, 10)
     neural_network.plot()
 
+    # Saving weights into file
+    print("Saving weights")
+    neural_network.save("weights.pickle")
+
+
+def test_dataset():
+    # Loading MNIST data set
+    print("Loading MNIST data set...")
+    data = MNIST("./MNIST_data_set")
+    test_images, test_labels = data.load_testing()
+
+    # Converting to numpy arrays and normalizing images
+    print("Preparing data...")
+    test_images = np.array(test_images) / 255
+    test_labels = np.array(test_labels)
+
+    # Getting dimensions
+    first_layer = test_images.shape[1]
+    last_layer = test_labels.max() + 1
+
+    # Creating neural network
+    print("Initializing neural network...")
+    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+
+    # Loading weights into neural network
+    print("Loading weights...")
+    neural_network.load("weights.pickle")
+
+    # Testing the neural network with the test data set
+    print("Testing...")
+    loss, accuracy = neural_network.test(test_images, test_labels)
+    print("Loss: ", loss)
+    print("Accuracy: ", accuracy)
+
+
+def test_custom_numbers():
+    # Setting up neural network
+    first_layer = 784
+    last_layer = 10
+    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network.load("weights.pickle")
+
     print("Testing with a local image")
+    image = load_image("Test_data/zero_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/one_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/two_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/three_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/four_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
     image = load_image("Test_data/five_1.png")
     probability = neural_network.forward(image)
-    print(np.sum(probability))
-    print(np.argmax(probability, axis=1))
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/six_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/seven_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/eight_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/nine_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test_dataset()
+    test_custom_numbers()
