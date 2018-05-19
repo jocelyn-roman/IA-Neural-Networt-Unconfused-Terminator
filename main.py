@@ -4,9 +4,10 @@ Created on Apr 27, 2018
 @author: J&J
 """
 
-from mnist import MNIST
 import matplotlib.pyplot as plt
+from mnist import MNIST
 import numpy as np
+from PIL import Image
 # import os # in case of file saving
 
 
@@ -24,8 +25,8 @@ class NeuralNetwork(object):
         self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
 
         # Class initializations
-        self.out_activation1 = np.zeros(1, 1)
-        self.out_activation2 = np.zeros(1, 1)
+        self.out_activation1 = np.zeros((1, 1))
+        self.out_activation2 = np.zeros((1, 1))
 
         self.graph = dict()
         self.graph['loss'] = []
@@ -259,12 +260,11 @@ class NeuralNetwork(object):
             self.graph['epoch'].append(i + 1)
 
 
-def visualize_image(W, loss, title, i):
+def visualize_image(x, loss, title):
     # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
-    element = W[i, :]
-    img = element.reshape(28, 28)
+    img = x.reshape(28, 28)
     plt.imshow(img, cmap='gray')
-    plt.title("W " + str(i) + "th with loss of " + str(loss))
+    plt.title("Image with loss of " + str(loss))
 
     # Uncomment this to show the image
     plt.show()
@@ -276,6 +276,22 @@ def visualize_image(W, loss, title, i):
         os.makedirs(directory)
     plt.savefig(directory + "/img" + str(i))
     '''
+
+
+def load_image(file):
+    # Receive a file path in string
+    image = Image.open(file)
+    # Converting to B&W
+    image = image.convert('L')
+    # Resizing
+    image = image.resize((28, 28))
+    # Get image as numpy array
+    raw_image = np.array(list(image.getdata()))
+    raw_image = raw_image.reshape(1, raw_image.shape[0])
+    # Close image
+    image.close()
+
+    return raw_image
 
 
 def main():
@@ -300,50 +316,17 @@ def main():
     print("Initializing neural network...")
     neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
 
-    # WORKING ON...
-    print("WORKING ON...")
-    neural_network.train(training_images, training_labels, 32, 5)
+    # Training neural network
+    print("Training...")
+    neural_network.train(training_images, training_labels, 32, 3)
     neural_network.plot()
 
-    print("TRAINING ENDED")
-
-
-def test():
-    a = np.array([
-       [-0.13916012, -0.15914156, -0.03611553, -0.06629650],
-       [-0.25373585,  0.39812677, -0.24083797, -0.17328009],
-       [-0.12787567,  0.14076882, -0.36499643, -0.32951989],
-       [ 0.24145116, -0.01344613,  0.25512426, -0.31819186],
-       [-0.02645782,  0.56205276,  0.05822283, -0.19174236],
-       [ 0.11615288, -0.20608460,  0.05785365, -0.24800982]])
-
-    b = np.array([0, 1, 2, 1, 2, 0])
-
-    c = np.array([3, 1, 2, 1, 2, 0])
-
-    # print(NeuralNetwork.forward(a))
-
-    print(a.shape)
-    print(NeuralNetwork.relu(a))
-    print(NeuralNetwork.relu_prime(a))
-
-    print(b.shape)
-    print(NeuralNetwork.to_one_hot(b))
-
-    print(NeuralNetwork.softmax(a))
-    print(NeuralNetwork.stable_softmax(a))
-    print(np.sum(NeuralNetwork.stable_softmax(a), axis=1))
-
-    print("Cross_entropy")
-    print(NeuralNetwork.cross_entropy(a, c))
-
-    print(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
-    print(np.mean(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a))))
-
-    print(NeuralNetwork.delta_cross_entropy(a, c))  # Different because m division
-    print(NeuralNetwork.one_hot_cross_entropy_prime_with_softmax(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
+    print("Testing with a local image")
+    image = load_image("Test_data/five_1.png")
+    probability = neural_network.forward(image)
+    print(np.sum(probability))
+    print(np.argmax(probability, axis=1))
 
 
 if __name__ == "__main__":
     main()
-    # test()
