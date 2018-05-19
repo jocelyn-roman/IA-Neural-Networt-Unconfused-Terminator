@@ -19,9 +19,18 @@ class NeuralNetwork(object):
         # Before ReLU weights are multiplied by 2 since the half of its input is 0
         # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         self.model = dict()
-        self.model['W1'] = np.random.randn(inputs, hidden1) / np.sqrt(inputs)
-        self.model['W2'] = np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
+        self.model['W1'] = 2 * np.random.randn(inputs, hidden1) / np.sqrt(inputs)
+        self.model['W2'] = 2 * np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
         self.model['W3'] = np.random.randn(hidden2, output) / np.sqrt(hidden2)
+
+        # Class initializations
+        self.out_activation1 = np.zeros(1, 1)
+        self.out_activation2 = np.zeros(1, 1)
+
+        self.graph = dict()
+        self.graph['loss'] = []
+        self.graph['accuracy'] = []
+        self.graph['epoch'] = []
 
     def forward(self, x):
         # Forward propagation through our network
@@ -176,6 +185,27 @@ class NeuralNetwork(object):
         correct = np.count_nonzero(difference == 0)
         return correct / total
 
+    def plot(self):
+        # The plot shows the learning behavior
+
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:blue'
+        ax1.set_xlabel('Generations')
+        ax1.set_ylabel('Loss', color=color)
+        ax1.plot(self.graph['epoch'], self.graph['loss'], color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()
+
+        color = 'tab:red'
+        ax2.set_ylabel('Accuracy', color=color)
+        ax2.plot(self.graph['epoch'], self.graph['accuracy'], color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        fig.tight_layout()
+        plt.show()
+
     def train(self, x, y, batch_size, epoch):
 
         # Converting labels to one-hot encoding
@@ -209,20 +239,24 @@ class NeuralNetwork(object):
             batch_labels = np.split(training_labels, batches, axis=0)
 
             # Take each mini-batch and train
-            for mini_data, mini_labels in zip(batch_data, batch_labels):
+            for idx, (mini_data, mini_labels) in enumerate(zip(batch_data, batch_labels)):
                 output, d1 = self.forward_propagation_with_dropout(mini_data)
                 loss = self.cross_entropy_loss(mini_labels, output)
                 accuracy = self.accuracy(output, mini_labels)
                 print("Loss: ", loss)
                 print("Accuracy: ", accuracy)
+                self.graph['loss'].append(loss)
+                self.graph['accuracy'].append(accuracy)
+                self.graph['epoch'].append(i + (idx / batches))
                 self.backward_propagation_with_dropout(mini_data, mini_labels, output, d1, 0.5)
 
             # Validating
             output = self.forward(validation)
             loss = self.cross_entropy_loss(validation_labels, output)
             accuracy = self.accuracy(output, validation_labels)
-            print("Loss: ", loss)
-            print("Accuracy: ", accuracy)
+            self.graph['loss'].append(loss)
+            self.graph['accuracy'].append(accuracy)
+            self.graph['epoch'].append(i + 1)
 
 
 def visualize_image(W, loss, title, i):
@@ -269,38 +303,9 @@ def main():
     # WORKING ON...
     print("WORKING ON...")
     neural_network.train(training_images, training_labels, 32, 5)
+    neural_network.plot()
 
     print("TRAINING ENDED")
-
-    print("TESTING...")
-
-    # test forward and backward
-    test_labels = neural_network.to_one_hot(test_labels)
-
-    result = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(test_labels, result)
-    accuracy = neural_network.accuracy(result, test_labels)
-    print(loss)
-    print(accuracy)
-
-    neural_network.backward(test_images, test_labels, result)
-
-    result = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(test_labels, result)
-    accuracy = neural_network.accuracy(result, test_labels)
-    print(loss)
-    print(accuracy)
-
-    # CODIGO JOCELYN XD
-    i = 0
-    while i < 10:
-        result = neural_network.forward(test_images)
-        loss = neural_network.cross_entropy_loss(test_labels, result)
-        accuracy = neural_network.accuracy(result, test_labels)
-        print(loss)
-        print(accuracy)
-        neural_network.backward(test_images, test_labels, result)
-        i += 1
 
 
 def test():
