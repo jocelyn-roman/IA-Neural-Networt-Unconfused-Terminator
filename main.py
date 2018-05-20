@@ -100,6 +100,18 @@ class NeuralNetwork(object):
         self.model['W2'] -= (self.out_activation1.T.dot(hidden2_delta)) * learning_rate
         self.model['W1'] -= (x.T.dot(hidden1_delta)) * learning_rate
 
+    def feed_backward(self, y):
+        # Forward propagation through our network
+        out_product1 = np.dot(y, self.model['W3'].T)
+
+        out_activation1 = self.relu(out_product1)
+        out_product2 = np.dot(out_activation1, self.model['W2'].T)
+
+        out_activation2 = self.relu(out_product2)
+        out_product3 = np.dot(out_activation2, self.model['W1'].T)
+
+        return out_product3
+
     # ReLU functions from https://stackoverflow.com/questions/32109319/how-to-implement-the-relu-function-in-numpy
 
     @staticmethod
@@ -378,7 +390,7 @@ def test_dataset():
 
     # Creating neural network
     print("Initializing neural network...")
-    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network = NeuralNetwork(first_layer, 1024, 1024, last_layer)
 
     # Loading weights into neural network
     print("Loading weights...")
@@ -395,7 +407,7 @@ def test_custom_numbers():
     # Setting up neural network
     first_layer = 784
     last_layer = 10
-    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network = NeuralNetwork(first_layer, 1024, 1024, last_layer)
     neural_network.load("weights.pickle")
 
     print("Testing with a local image")
@@ -450,7 +462,21 @@ def test_custom_numbers():
     plot_probability(probability[0])
 
 
+def test_feed_backward():
+    # Setting up neural network
+    first_layer = 784
+    last_layer = 10
+    neural_network = NeuralNetwork(first_layer, 1024, 1024, last_layer)
+    neural_network.load("weights.pickle")
+
+    result = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    image = neural_network.feed_backward(result) * 255
+    visualize_image(image, 1, "")
+
+
 if __name__ == "__main__":
     # main()
-    test_dataset()
-    test_custom_numbers()
+    # test_dataset()
+    # test_custom_numbers()
+    test_feed_backward()
