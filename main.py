@@ -109,56 +109,67 @@ def test_data(network, data):
     print("Accuracy: ", accuracy)
 
 
-def test_custom_numbers(network):
-    network.load("weights.pickle")
+def test_custom_numbers():
+    network = nn.OneHiddenLayer(784, 128, 10)
+    network.load("output/weights/network_one_128.pickle")
 
     print("Testing with a local image")
     image = utl.load_image("Test_data/zero_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
     utl.plot_probability(probability[0])
 
-    image = utl.load_image("Test_data/uno.png")
+    image = utl.load_image("Test_data/one_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
     image = utl.load_image("Test_data/two_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
     image = utl.load_image("Test_data/three_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
-    image = utl.load_image("Test_data/cuatro.png")
+    image = utl.load_image("Test_data/four_2.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
     image = utl.load_image("Test_data/five_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
-    image = utl.load_image("Test_data/seis.png")
+    image = utl.load_image("Test_data/six_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
-    image = utl.load_image("Test_data/siete2.png")
+    image = utl.load_image("Test_data/seven_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
     image = utl.load_image("Test_data/eight_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
-    utl.plot_probability(probability[0])
+    # utl.plot_probability(probability[0])
 
-    image = utl.load_image("Test_data/nueve.png")
+    image = utl.load_image("Test_data/nine_1.png")
+    utl.visualize_image(image, "TEST")
     probability = network.forward(image)
     print(np.argmax(probability))
     utl.plot_probability(probability[0])
@@ -166,16 +177,35 @@ def test_custom_numbers(network):
 
 def test_feed_backward():
     # Setting up neural network
-    first_layer = 784
-    last_layer = 10
-    neural_network = nn.OneHiddenLayer(first_layer, 1024, last_layer)
-    neural_network.load("weights.pickle")
+    network = nn.OneHiddenLayer(784, 128, 10)
+    network.load("output/weights/network_one_128.pickle")
 
-    result = np.array([[0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]])
+    labels = np.array([[1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00],
+                       [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00]])
 
-    image = neural_network.feed_backward(result) * 255
-    utl.visualize_image(image, 1, "")
+    images = network.feed_backward(labels) * 255
+
+    utl.visualize_image(images[0], "Zero")
+    utl.visualize_image(images[1], "One")
+    utl.visualize_image(images[2], "Two")
+    utl.visualize_image(images[3], "Three")
+    utl.visualize_image(images[4], "Four")
+    utl.visualize_image(images[5], "Five")
+    utl.visualize_image(images[6], "Six")
+    utl.visualize_image(images[7], "Seven")
+    utl.visualize_image(images[8], "Eight")
+    utl.visualize_image(images[9], "Nine")
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test_custom_numbers()
+    # test_feed_backward()

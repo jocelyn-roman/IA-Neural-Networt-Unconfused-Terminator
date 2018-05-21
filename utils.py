@@ -1,24 +1,25 @@
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
-import os  # in case of file saving
+# import os  # in case of file saving
 
 
-def visualize_image(x, loss, title):
+def visualize_image(x, title):
     # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
     img = x.reshape(28, 28)
     plt.imshow(img, cmap='gray')
-    plt.title("Image with loss of " + str(loss))
+    plt.title("Feed backward of " + title)
 
     # Uncomment this to show the image
     plt.show()
 
     # Uncomment the following code to save into disk
-
-    directory = os.path.abspath("output/" + title)
+    '''
+    directory = os.path.abspath("output/backward")
     if not os.path.exists(directory):
         os.makedirs(directory)
-    plt.savefig(directory + "/img")
+    plt.savefig(directory + "/" + title)
+    '''
 
 
 def plot_probability(probability):
