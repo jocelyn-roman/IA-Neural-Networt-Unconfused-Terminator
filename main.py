@@ -476,7 +476,7 @@ def test_feed_backward():
 
 
 if __name__ == "__main__":
-     main()
-    #test_dataset()
+    main()
+    # test_dataset()
     # test_custom_numbers()
-    #test_feed_backward()
+    # test_feed_backward()
