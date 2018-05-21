@@ -361,11 +361,11 @@ def main():
 
     # Creating neural network
     print("Initializing neural network...")
-    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network = NeuralNetwork(first_layer, 512, 128, last_layer)
 
     # Training neural network
     print("Training...")
-    neural_network.train(training_images, training_labels, 32, 10)
+    neural_network.train(training_images, training_labels, 32, 5)
     neural_network.plot()
 
     # Saving weights into file
@@ -416,7 +416,7 @@ def test_custom_numbers():
     print(np.argmax(probability))
     plot_probability(probability[0])
 
-    image = load_image("Test_data/one_1.png")
+    image = load_image("Test_data/uno.png")
     probability = neural_network.forward(image)
     print(np.argmax(probability))
     plot_probability(probability[0])
@@ -431,7 +431,7 @@ def test_custom_numbers():
     print(np.argmax(probability))
     plot_probability(probability[0])
 
-    image = load_image("Test_data/four_1.png")
+    image = load_image("Test_data/cuatro.png")
     probability = neural_network.forward(image)
     print(np.argmax(probability))
     plot_probability(probability[0])
@@ -441,12 +441,12 @@ def test_custom_numbers():
     print(np.argmax(probability))
     plot_probability(probability[0])
 
-    image = load_image("Test_data/six_1.png")
+    image = load_image("Test_data/seis.png")
     probability = neural_network.forward(image)
     print(np.argmax(probability))
     plot_probability(probability[0])
 
-    image = load_image("Test_data/seven_1.png")
+    image = load_image("Test_data/siete2.png")
     probability = neural_network.forward(image)
     print(np.argmax(probability))
     plot_probability(probability[0])
@@ -456,7 +456,7 @@ def test_custom_numbers():
     print(np.argmax(probability))
     plot_probability(probability[0])
 
-    image = load_image("Test_data/nine_1.png")
+    image = load_image("Test_data/nueve.png")
     probability = neural_network.forward(image)
     print(np.argmax(probability))
     plot_probability(probability[0])
@@ -476,7 +476,7 @@ def test_feed_backward():
 
 
 if __name__ == "__main__":
-    # main()
-    # test_dataset()
+     main()
+    #test_dataset()
     # test_custom_numbers()
-    test_feed_backward()
+    #test_feed_backward()

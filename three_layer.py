@@ -4,23 +4,24 @@ Created on Apr 27, 2018
 @author: J&J
 """
 
-from mnist import MNIST
 import matplotlib.pyplot as plt
+from mnist import MNIST
 import numpy as np
-# import os # in case of file saving
+from PIL import Image
+import pickle
 
 
 class NeuralNetwork(object):
     # This class was initially based on:
     # https://dev.to/shamdasani/build-a-flexible-neural-network-with-backpropagation-in-python
 
-    def __init__(self, inputs, hidden1, hidden2, output):
+    def __init__(self, inputs, hidden1,  output):
         # Parameters and initializations
         # Before ReLU weights are multiplied by 2 since the half of its input is 0
         # Source: http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         self.model = dict()
         self.model['W1'] = np.random.randn(inputs, hidden1) / np.sqrt(inputs)
-        self.model['W2'] = np.random.randn(hidden1, hidden2) / np.sqrt(hidden1)
+        self.model['W2'] = np.random.randn(hidden1, output) / np.sqrt(hidden1)
 
     def forward(self, x):
         # Forward propagation through our network
@@ -162,8 +163,42 @@ class NeuralNetwork(object):
         correct = np.count_nonzero(difference == 0)
         return correct / total
 
-    def train(self, x, y, batch_size, epoch):
+    def save(self, filename):
+            # Saves weights in file
+            with open(filename, 'wb') as handle:
+                pickle.dump(self.model, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+
+    def load(self, filename):
+
+        # Loads weights from file
+        with open(filename, 'rb') as handle:
+            self.model = pickle.load(handle)
+
+
+    def plot(self):
+        # The plot shows the learning behavior
+
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:blue'
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss', color=color)
+        ax1.plot(self.graph['epoch'], self.graph['loss'], color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()
+
+        color = 'tab:red'
+        ax2.set_ylabel('Accuracy', color=color)
+        ax2.plot(self.graph['epoch'], self.graph['accuracy'], color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        fig.tight_layout()
+        plt.show()
+
+
+    def train(self, x, y, batch_size, epoch):
         # Converting labels to one-hot encoding
         labels = self.to_one_hot(y)
 
@@ -195,28 +230,45 @@ class NeuralNetwork(object):
             batch_labels = np.split(training_labels, batches, axis=0)
 
             # Take each mini-batch and train
-            for mini_data, mini_labels in zip(batch_data, batch_labels):
+            for idx, (mini_data, mini_labels) in enumerate(zip(batch_data, batch_labels)):
                 output, d1 = self.forward_propagation_with_dropout(mini_data)
                 loss = self.cross_entropy_loss(mini_labels, output)
                 accuracy = self.accuracy(output, mini_labels)
                 print("Loss: ", loss)
                 print("Accuracy: ", accuracy)
+                self.graph['loss'].append(loss)
+                self.graph['accuracy'].append(accuracy)
+                self.graph['epoch'].append(i + (idx / batches))
                 self.backward_propagation_with_dropout(mini_data, mini_labels, output, d1, 0.5)
 
             # Validating
             output = self.forward(validation)
             loss = self.cross_entropy_loss(validation_labels, output)
             accuracy = self.accuracy(output, validation_labels)
-            print("Loss: ", loss)
-            print("Accuracy: ", accuracy)
+            self.graph['loss'].append(loss)
+            self.graph['accuracy'].append(accuracy)
+            self.graph['epoch'].append(i + 1)
 
 
-def visualize_image(W, loss, title, i):
+def test(self, x, y):
+    # Converting labels to one-hot encoding
+    labels = self.to_one_hot(y)
+
+    # Doing feed forward
+    output = self.forward(x)
+
+    # Calculating loss and accuracy
+    loss = self.cross_entropy_loss(labels, output)
+    accuracy = self.accuracy(output, labels)
+
+    return loss, accuracy
+
+
+def visualize_image(x, loss, title):
     # Based on: https://www.quora.com/How-can-l-visualize-cifar-10-data-RGB-using-python-matplotlib
-    element = W[i, :]
-    img = element.reshape(28, 28)
+    img = x.reshape(28, 28)
     plt.imshow(img, cmap='gray')
-    plt.title("W " + str(i) + "th with loss of " + str(loss))
+    plt.title("Image with loss of " + str(loss))
 
     # Uncomment this to show the image
     plt.show()
@@ -228,6 +280,31 @@ def visualize_image(W, loss, title, i):
         os.makedirs(directory)
     plt.savefig(directory + "/img" + str(i))
     '''
+
+
+def plot_probability(probability):
+    # Based on: https://plot.ly/matplotlib/bar-charts/
+    y = probability
+    x = range(10)
+    width = 1 / 1.5
+    plt.bar(x, y, width, color="blue")
+    plt.show()
+
+
+def load_image(file):
+    # Receive a file path in string
+    image = Image.open(file)
+    # Converting to B&W
+    image = image.convert('L')
+    # Resizing
+    image = image.resize((28, 28))
+    # Get image as numpy array
+    raw_image = np.array(list(image.getdata()))
+    raw_image = raw_image.reshape(1, raw_image.shape[0])
+    # Close image
+    image.close()
+
+    return raw_image
 
 
 def main():
@@ -250,81 +327,122 @@ def main():
 
     # Creating neural network
     print("Initializing neural network...")
-    neural_network = NeuralNetwork(first_layer, 512, 512, last_layer)
+    neural_network = NeuralNetwork(first_layer, 512,  last_layer)
 
-    # WORKING ON...
-    print("WORKING ON...")
-    neural_network.train(training_images, training_labels, 32, 5)
+    # Training neural network
+    print("Training...")
+    neural_network.train(training_images, training_labels, 32, 10)
+    neural_network.plot()
 
-    print("TRAINING ENDED")
-
-    print("TESTING...")
-
-    # test forward and backward
-    test_labels = neural_network.to_one_hot(test_labels)
-
-    result = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(test_labels, result)
-    accuracy = neural_network.accuracy(result, test_labels)
-    print(loss)
-    print(accuracy)
-
-    neural_network.backward(test_images, test_labels, result)
-
-    result = neural_network.forward(test_images)
-    loss = neural_network.cross_entropy_loss(test_labels, result)
-    accuracy = neural_network.accuracy(result, test_labels)
-    print(loss)
-    print(accuracy)
-
-    # CODIGO JOCELYN XD
-    i = 0
-    while i < 10:
-        result = neural_network.forward(test_images)
-        loss = neural_network.cross_entropy_loss(test_labels, result)
-        accuracy = neural_network.accuracy(result, test_labels)
-        print(loss)
-        print(accuracy)
-        neural_network.backward(test_images, test_labels, result)
-        i += 1
+    # Saving weights into file
+    print("Saving weights")
+    neural_network.save("weights.pickle")
 
 
-def test():
-    a = np.array([
-       [-0.13916012, -0.15914156, -0.03611553, -0.06629650],
-       [-0.25373585,  0.39812677, -0.24083797, -0.17328009],
-       [-0.12787567,  0.14076882, -0.36499643, -0.32951989],
-       [ 0.24145116, -0.01344613,  0.25512426, -0.31819186],
-       [-0.02645782,  0.56205276,  0.05822283, -0.19174236],
-       [ 0.11615288, -0.20608460,  0.05785365, -0.24800982]])
+def test_dataset():
+    # Loading MNIST data set
+    print("Loading MNIST data set...")
+    data = MNIST("./MNIST_data_set")
+    test_images, test_labels = data.load_testing()
 
-    b = np.array([0, 1, 2, 1, 2, 0])
+    # Converting to numpy arrays and normalizing images
+    print("Preparing data...")
+    test_images = np.array(test_images) / 255
+    test_labels = np.array(test_labels)
 
-    c = np.array([3, 1, 2, 1, 2, 0])
+    # Getting dimensions
+    first_layer = test_images.shape[1]
+    last_layer = test_labels.max() + 1
 
-    # print(NeuralNetwork.forward(a))
+    # Creating neural network
+    print("Initializing neural network...")
+    neural_network = NeuralNetwork(first_layer, 1024, last_layer)
 
-    print(a.shape)
-    print(NeuralNetwork.relu(a))
-    print(NeuralNetwork.relu_prime(a))
+    # Loading weights into neural network
+    print("Loading weights...")
+    neural_network.load("weights.pickle")
 
-    print(b.shape)
-    print(NeuralNetwork.to_one_hot(b))
+    # Testing the neural network with the test data set
+    print("Testing...")
+    loss, accuracy = neural_network.test(test_images, test_labels)
+    print("Loss: ", loss)
+    print("Accuracy: ", accuracy)
 
-    print(NeuralNetwork.softmax(a))
-    print(NeuralNetwork.stable_softmax(a))
-    print(np.sum(NeuralNetwork.stable_softmax(a), axis=1))
 
-    print("Cross_entropy")
-    print(NeuralNetwork.cross_entropy(a, c))
+def test_custom_numbers():
+    # Setting up neural network
+    first_layer = 784
+    last_layer = 10
+    neural_network = NeuralNetwork(first_layer, 512,  last_layer)
+    neural_network.load("weights.pickle")
 
-    print(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
-    print(np.mean(NeuralNetwork.one_hot_cross_entropy(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a))))
+    print("Testing with a local image")
+    image = load_image("Test_data/zero_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
 
-    print(NeuralNetwork.delta_cross_entropy(a, c))  # Different because m division
-    print(NeuralNetwork.one_hot_cross_entropy_prime_with_softmax(NeuralNetwork.to_one_hot(c), NeuralNetwork.softmax(a)))
+    image = load_image("Test_data/uno.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/two_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/three_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/cuatro.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/five_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/seis.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/siete2.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/eight_1.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+    image = load_image("Test_data/nueve.png")
+    probability = neural_network.forward(image)
+    print(np.argmax(probability))
+    plot_probability(probability[0])
+
+
+def test_feed_backward():
+    # Setting up neural network
+    first_layer = 784
+    last_layer = 10
+    neural_network = NeuralNetwork(first_layer, 1024,  last_layer)
+    neural_network.load("weights.pickle")
+
+    result = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    image = neural_network.feed_backward(result) * 255
+    visualize_image(image, 1, "")
 
 
 if __name__ == "__main__":
-    main()
-    # test()
+    # main()
+    # test_dataset()
+    test_custom_numbers()
+# test_feed_backward()
