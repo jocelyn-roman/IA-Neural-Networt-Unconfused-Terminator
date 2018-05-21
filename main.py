@@ -361,7 +361,7 @@ def main():
 
     # Creating neural network
     print("Initializing neural network...")
-    neural_network = NeuralNetwork(first_layer, 512, 128, last_layer)
+    neural_network = NeuralNetwork(first_layer, 1024, 1024, last_layer)
 
     # Training neural network
     print("Training...")
@@ -469,7 +469,7 @@ def test_feed_backward():
     neural_network = NeuralNetwork(first_layer, 1024, 1024, last_layer)
     neural_network.load("weights.pickle")
 
-    result = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    result = np.array([[0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]])
 
     image = neural_network.feed_backward(result) * 255
     visualize_image(image, 1, "")
