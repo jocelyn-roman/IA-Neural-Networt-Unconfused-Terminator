@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
+import os
+
 
 class NeuralNetwork(object):
     # This class was initially based on:
@@ -129,7 +131,7 @@ class NeuralNetwork(object):
         with open(filename, 'rb') as handle:
             self.model = pickle.load(handle)
 
-    def plot(self):
+    def plot(self, path):
         # The plot shows the learning behavior
 
         fig, ax1 = plt.subplots()
@@ -148,7 +150,12 @@ class NeuralNetwork(object):
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()
-        plt.show()
+        # plt.show()
+
+        directory = os.path.abspath("output/plot")
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        plt.savefig(directory + "/" + path)
 
     def train(self, x, y, batch_size, epoch):
 
@@ -187,8 +194,8 @@ class NeuralNetwork(object):
                 output, d1 = self.forward_propagation_with_dropout(mini_data)
                 loss = self.cross_entropy_loss(mini_labels, output)
                 accuracy = self.accuracy(output, mini_labels)
-                print("Loss: ", loss)
-                print("Accuracy: ", accuracy)
+                # print("Loss: ", loss)
+                # print("Accuracy: ", accuracy)
                 self.graph['loss'].append(loss)
                 self.graph['accuracy'].append(accuracy)
                 self.graph['epoch'].append(i + (idx / batches))

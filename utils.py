@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from PIL import Image
-# import os # in case of file saving
+import numpy as np
+import os  # in case of file saving
 
 
 def visualize_image(x, loss, title):
@@ -13,12 +14,11 @@ def visualize_image(x, loss, title):
     plt.show()
 
     # Uncomment the following code to save into disk
-    '''
+
     directory = os.path.abspath("output/" + title)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    plt.savefig(directory + "/img" + str(i))
-    '''
+    plt.savefig(directory + "/img")
 
 
 def plot_probability(probability):
